@@ -1,0 +1,3 @@
+[submodule "externals/CMSIS-DSP"]
+	path = externals/CMSIS-DSP
+	url = https://github.com/Segfault1602/CMSIS-DSP.git

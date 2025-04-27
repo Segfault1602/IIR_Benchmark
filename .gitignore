@@ -38,3 +38,4 @@ imgui.ini
 *.html
 
 /build
+*.json

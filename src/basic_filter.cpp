@@ -21,19 +21,17 @@ void BiquadFilter::SetCoeffs(std::span<const float> coeffs)
     y2_ = 0.f;
 }
 
-void BiquadFilter::process(std::span<const float> input, std::span<float> output)
+float BiquadFilter::process(float input)
 {
-    for (size_t i = 0; i < input.size(); ++i)
-    {
-        x0_ = input[i];
-        y0_ = b0_ * x0_ + b1_ * x1_ + b2_ * x2_ - a1_ * y1_ - a2_ * y2_;
 
-        y2_ = y1_;
-        y1_ = y0_;
-        x2_ = x1_;
-        x1_ = x0_;
-        output[i] = y0_;
-    }
+    x0_ = input;
+    y0_ = b0_ * x0_ + b1_ * x1_ + b2_ * x2_ - a1_ * y1_ - a2_ * y2_;
+
+    y2_ = y1_;
+    y1_ = y0_;
+    x2_ = x1_;
+    x1_ = x0_;
+    return y0_;
 }
 
 BasicFilter::BasicFilter()
@@ -46,6 +44,7 @@ BasicFilter::BasicFilter()
         coeffs[2] = kTestSOS[i][2] / kTestSOS[i][3];
         coeffs[3] = kTestSOS[i][4] / kTestSOS[i][3];
         coeffs[4] = kTestSOS[i][5] / kTestSOS[i][3];
+
         BiquadFilter filter;
         filter.SetCoeffs(coeffs);
         filters_.push_back(filter);
@@ -54,10 +53,14 @@ BasicFilter::BasicFilter()
 
 void BasicFilter::process(std::span<const float> input, std::span<float> output)
 {
-    for (size_t i = 0; i < filters_.size(); ++i)
+    for (size_t i = 0; i < input.size(); ++i)
     {
-        filters_[i].process(input, output);
-        input = output;
+        float y = input[i];
+        for (size_t i = 0; i < filters_.size(); ++i)
+        {
+            y = filters_[i].process(y);
+        }
+        output[i] = y;
     }
 }
 

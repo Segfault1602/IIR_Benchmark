@@ -1,8 +1,8 @@
-#include "cmsis_scalar_filter.h"
+#include "cmsis_filter.h"
 
 #include "filter_coeffs.h"
 
-CMSISScalarFilterDF2T::CMSISScalarFilterDF2T()
+CMSISFilterDF2T::CMSISFilterDF2T()
 {
 
     stage_ = kTestSOS.size();
@@ -28,12 +28,12 @@ CMSISScalarFilterDF2T::CMSISScalarFilterDF2T()
     arm_biquad_cascade_df2T_init_f32(&biquad_instance_, stage_, coeffs_.data(), states_.data());
 }
 
-void CMSISScalarFilterDF2T::process(std::span<const float> input, std::span<float> output)
+void CMSISFilterDF2T::process(std::span<const float> input, std::span<float> output)
 {
     arm_biquad_cascade_df2T_f32(&biquad_instance_, input.data(), output.data(), input.size());
 }
 
-CMSISScalarFilterDF1::CMSISScalarFilterDF1()
+CMSISFilterDF1::CMSISFilterDF1()
 {
     stage_ = kTestSOS.size();
     coeffs_.resize(stage_ * 5);
@@ -52,7 +52,7 @@ CMSISScalarFilterDF1::CMSISScalarFilterDF1()
     arm_biquad_cascade_df1_init_f32(&biquad_instance_, stage_, coeffs_.data(), states_.data());
 }
 
-void CMSISScalarFilterDF1::process(std::span<const float> input, std::span<float> output)
+void CMSISFilterDF1::process(std::span<const float> input, std::span<float> output)
 {
     arm_biquad_cascade_df1_f32(&biquad_instance_, input.data(), output.data(), input.size());
 }

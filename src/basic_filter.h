@@ -13,7 +13,7 @@ class BiquadFilter
 
     void SetCoeffs(std::span<const float> coeffs);
 
-    void process(std::span<const float> input, std::span<float> output);
+    float process(float input);
 
   private:
     float a1_, a2_, b0_, b1_, b2_;

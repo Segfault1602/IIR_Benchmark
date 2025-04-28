@@ -2,7 +2,7 @@
 #include <doctest.h>
 
 #include "basic_filter.h"
-#include "cmsis_scalar_filter.h"
+#include "cmsis_filter.h"
 #include "filter_coeffs.h"
 
 #ifdef __APPLE__
@@ -25,10 +25,9 @@ TEST_CASE_TEMPLATE_DEFINE("Filter", T, test_id)
     }
 }
 
-TYPE_TO_STRING(CMSISScalarFilterDF2T);
+TYPE_TO_STRING(CMSISFilterDF2T);
 
-TEST_CASE_TEMPLATE_INVOKE(test_id, CMSISScalarFilterDF2T, CMSISScalarFilterDF1, BasicFilter, CascadedIIRDF2T,
-                          CascadedIIRDF1
+TEST_CASE_TEMPLATE_INVOKE(test_id, CMSISFilterDF2T, CMSISFilterDF1, BasicFilter, CascadedIIRDF2T, CascadedIIRDF1
 #ifdef __APPLE__
                           ,
                           vDSPFilter

@@ -9,9 +9,8 @@
 
 #include "basic_filter.h"
 
-#ifdef CMSIS_FILTER_SCALAR
-#include "cmsis_scalar_filter.h"
-
+#if defined(CMSIS_FILTER_SCALAR) || defined(CMSIS_FILTER_NEON)
+#include "cmsis_filter.h"
 #endif
 
 #ifdef VDSP_FILTER
@@ -24,16 +23,14 @@ using namespace std::chrono_literals;
 template <typename T>
 void RunFilter(std::span<const float> input, std::span<float> output, size_t block_size)
 {
-    T filter;
-
     assert(input.size() % block_size == 0);
+    T filter;
 
     size_t block_count = input.size() / block_size;
     for (size_t i = 0; i < block_count; ++i)
     {
-        std::span<const float> input_block = input.subspan(i * block_size, block_size);
-        std::span<float> output_block = output.subspan(i * block_size, block_size);
-
+        auto input_block = input.subspan(i * block_size, block_size);
+        auto output_block = output.subspan(i * block_size, block_size);
         filter.process(input_block, output_block);
     }
 }
@@ -42,7 +39,7 @@ template <typename T>
 void RunTest(const std::string& name)
 {
     const std::vector<size_t> kBlockSize = {1, 4, 8, 16, 32, 64, 128, 256, 512, 1024};
-    constexpr size_t input_size = 4096;
+    constexpr size_t input_size = 32768;
 
     nanobench::Bench bench;
     bench.title(name);
@@ -65,6 +62,7 @@ void RunTest(const std::string& name)
 
     for (size_t i = 0; i < kBlockSize.size(); ++i)
     {
+        // bench.batch(kBlockSize[i]);
         std::string test_name = name + "_" + std::to_string(kBlockSize[i]);
         bench.run(test_name, [&]() { RunFilter<T>(input, output, kBlockSize[i]); });
     }
@@ -80,14 +78,21 @@ int main()
 
 #ifdef BASIC_FILTER
     RunTest<BasicFilter>("basic_filter");
+    RunTest<CascadedIIRDF2T>("CascadedIIRDF2T");
+    RunTest<CascadedIIRDF1>("CascadedIIRDF1");
 #endif
 
 #ifdef CMSIS_FILTER_SCALAR
-    RunTest<CMSISScalarFilterDF2T>("CMSISScalarFilterDF2T");
-    RunTest<CMSISScalarFilterDF1>("CMSISScalarFilterDF1");
+    RunTest<CMSISFilterDF2T>("CMSIS_Scalar_FilterDF2T");
+    RunTest<CMSISFilterDF1>("CMSIS-Scalar_FilterDF1");
 #endif
 
 #ifdef VDSP_FILTER
-    RunTest<VDSPFilter>("vdsp_filter");
+    RunTest<vDSPFilter>("vdsp_filter");
+#endif
+
+#ifdef CMSIS_FILTER_NEON
+    RunTest<CMSISFilterDF2T>("CMSIS_NEON_FilterDF2T");
+    RunTest<CMSISFilterDF1>("CMSIS_NEON_FilterDF1");
 #endif
 }

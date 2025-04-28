@@ -5,11 +5,11 @@
 #include <dsp/filtering_functions.h>
 #include <vector>
 
-class CMSISScalarFilterDF2T : public Filter
+class CMSISFilterDF2T : public Filter
 {
   public:
-    CMSISScalarFilterDF2T();
-    ~CMSISScalarFilterDF2T() override = default;
+    CMSISFilterDF2T();
+    ~CMSISFilterDF2T() override = default;
 
     void process(std::span<const float> input, std::span<float> output) override;
 
@@ -20,11 +20,11 @@ class CMSISScalarFilterDF2T : public Filter
     size_t stage_;
 };
 
-class CMSISScalarFilterDF1 : public Filter
+class CMSISFilterDF1 : public Filter
 {
   public:
-    CMSISScalarFilterDF1();
-    ~CMSISScalarFilterDF1() override = default;
+    CMSISFilterDF1();
+    ~CMSISFilterDF1() override = default;
 
     void process(std::span<const float> input, std::span<float> output) override;
 

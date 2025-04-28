@@ -12,7 +12,7 @@ set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 
 option(NEON_FILTER "Enable NEON filter" OFF)
 
-if ((${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64") OR (${CMAKE_SYSTEM_PROCESSOR} MATCHES "armv8"))
+if((${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm64"))
     set(NEON_FILTER ON)
     message(STATUS "NEON filter enabled")
 endif()

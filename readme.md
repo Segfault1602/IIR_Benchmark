@@ -54,7 +54,4 @@ The following results where obtained by running the benchmark on an Intel i9-129
 
 Compiled with **Clang 20.1.3** with the `-O3` optimization flag.
 
-> [!NOTE]
-> The IPP implementation is struggling with a block size less than 64 but if a dummy biquad is added to the filter, to bring its order to 12, the performance becomes linear at around 10 ns. It seems that the number of cascaded biquads needs to be a multiple of 2 for the IPP performance to be optimal. Needs to be investigated further.
-
 ![Benchmark Results](results/perf_results_win32.png)

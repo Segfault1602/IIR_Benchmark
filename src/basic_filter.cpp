@@ -23,7 +23,6 @@ void BiquadFilter::SetCoeffs(std::span<const float> coeffs)
 
 float BiquadFilter::process(float input)
 {
-
     x0_ = input;
     y0_ = b0_ * x0_ + b1_ * x1_ + b2_ * x2_ - a1_ * y1_ - a2_ * y2_;
 

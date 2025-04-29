@@ -12,7 +12,7 @@ The different implementations are:
 
 ## Methodology
 
-The benchmarking test consists of filtering 32768 samples of white noise with a specific block size. The test filter is a graphic equalizer composed of 11 cascaded biquads.
+The benchmarking test consists of filtering 32768 samples of white noise with a specific block size. The test filter is composed of 12 cascaded biquads.
 ```cpp
 template <typename T>
 void RunFilter(std::span<const float> input, std::span<float> output, size_t block_size)

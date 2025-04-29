@@ -22,7 +22,7 @@
             "program": "${workspaceFolder}/build/src/Debug/check",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${fileDirname}",
+            "cwd": "${workspaceFolder}",
             "environment": [],
             "externalConsole": false,
             "MIMode": "lldb"

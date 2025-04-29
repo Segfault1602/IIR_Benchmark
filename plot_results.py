@@ -78,7 +78,8 @@ def plot_all():
 
     # Pad y limit to make room for the legend
     y_min, y_max = ax.get_ylim()
-    ax.set_ylim(y_min, 30)
+    if sys.platform == "win32":
+        ax.set_ylim(y_min, 30)
 
     platform_name = sys.platform
     if platform_name == "linux":

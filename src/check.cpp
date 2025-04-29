@@ -9,6 +9,10 @@
 #include "vdsp_filter.h"
 #endif
 
+#ifdef IPP_FILTER
+#include "ipp_filter.h"
+#endif
+
 TEST_CASE_TEMPLATE_DEFINE("Filter", T, test_id)
 {
     constexpr size_t size = 32;
@@ -31,5 +35,9 @@ TEST_CASE_TEMPLATE_INVOKE(test_id, CMSISFilterDF2T, CMSISFilterDF1, BasicFilter,
 #ifdef __APPLE__
                           ,
                           vDSPFilter
+#endif
+#ifdef IPP_FILTER
+                          ,
+                          IppFilter
 #endif
 );

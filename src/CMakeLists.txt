@@ -1,10 +1,16 @@
 set(FILTER_SOURCE cmsis_filter.cpp basic_filter.cpp)
-
+set(EXTRA_DEFINES "")
 set(COMPILE_OPTION $<$<CONFIG:Release>:-O3> -ffast-math)
 
 if(APPLE)
     set(FILTER_SOURCE ${FILTER_SOURCE} vdsp_filter.cpp)
     set(EXTRA_LIBS ${EXTRA_LIBS} "-framework Accelerate")
+endif()
+
+if(USE_IPP)
+    set(FILTER_SOURCE ${FILTER_SOURCE} ipp_filter.cpp)
+    set(EXTRA_LIBS ${EXTRA_LIBS} IPP::ippcore IPP::ipps)
+    set(EXTRA_DEFINES ${EXTRA_DEFINES} -DIPP_FILTER)
 endif()
 
 add_executable(basic_filter_perf main.cpp basic_filter.cpp)
@@ -31,8 +37,16 @@ if(NEON_FILTER)
     target_compile_definitions(neon_perf PRIVATE -DCMSIS_FILTER_NEON -DARM_MATH_NEON)
 endif()
 
+if(USE_IPP)
+    add_executable(ipp_perf main.cpp ipp_filter.cpp)
+    target_link_libraries(ipp_perf PUBLIC IPP::ippcore IPP::ipps nanobench)
+    target_compile_options(ipp_perf PRIVATE "${COMPILE_OPTION}")
+    target_compile_definitions(ipp_perf PRIVATE -DIPP_FILTER)
+endif()
+
 add_executable(check check.cpp ${FILTER_SOURCE})
 target_link_libraries(check PUBLIC doctest cmsis_scalar ${EXTRA_LIBS})
+target_compile_definitions(check PRIVATE ${EXTRA_DEFINES})
 target_include_directories(check PRIVATE ${doctest_SOURCE_DIR}/doctest)
 
 if(NEON_FILTER)

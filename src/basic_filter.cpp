@@ -70,14 +70,14 @@ CascadedIIRDF2T::CascadedIIRDF2T()
     coeffs_.resize(stage_ * 5);
     for (size_t i = 0; i < kTestSOS.size(); i++)
     {
-        coeffs_[i * 5 + 0] = kTestSOS[i][0] / kTestSOS[i][3];
-        coeffs_[i * 5 + 1] = kTestSOS[i][1] / kTestSOS[i][3];
-        coeffs_[i * 5 + 2] = kTestSOS[i][2] / kTestSOS[i][3];
-        coeffs_[i * 5 + 3] = kTestSOS[i][4] / kTestSOS[i][3];
-        coeffs_[i * 5 + 4] = kTestSOS[i][5] / kTestSOS[i][3];
+        coeffs_[i].b0 = kTestSOS[i][0] / kTestSOS[i][3];
+        coeffs_[i].b1 = kTestSOS[i][1] / kTestSOS[i][3];
+        coeffs_[i].b2 = kTestSOS[i][2] / kTestSOS[i][3];
+        coeffs_[i].a1 = kTestSOS[i][4] / kTestSOS[i][3];
+        coeffs_[i].a2 = kTestSOS[i][5] / kTestSOS[i][3];
     }
 
-    states_.resize(stage_ * 2, 0);
+    states_.resize(stage_, {0});
 }
 
 void CascadedIIRDF2T::process(std::span<const float> input, std::span<float> output)
@@ -85,34 +85,27 @@ void CascadedIIRDF2T::process(std::span<const float> input, std::span<float> out
     const float* in_ptr = input.data();
     float* out_ptr = output.data();
 
-    size_t sample = input.size();
-    while (sample > 0)
+    size_t sample = 0;
+    while (sample < input.size())
     {
-        float* coeffs_ptr = coeffs_.data();
-        float* state_ptr = states_.data();
-        size_t stage = stage_;
-        float in1 = *in_ptr++;
+        size_t stage = 0;
+        float in1 = input[sample];
         float out1 = 0;
-        do
+        while (stage < stage_)
         {
-            float* b = coeffs_ptr;
-            coeffs_ptr += 3;
-            float* a = coeffs_ptr;
-            coeffs_ptr += 2;
+            IIRCoeffs coeffs = coeffs_[stage];
+            IIRState* state = &states_[stage];
 
-            float* state = state_ptr;
-            state_ptr += 2;
-
-            out1 = b[0] * in1 + state[0];
-            state[0] = b[1] * in1 - a[0] * out1 + state[1];
-            state[1] = b[2] * in1 - a[1] * out1;
+            out1 = coeffs.b0 * in1 + state->s0;
+            state->s0 = coeffs.b1 * in1 - coeffs.a1 * out1 + state->s1;
+            state->s1 = coeffs.b2 * in1 - coeffs.a2 * out1;
 
             in1 = out1;
-            --stage;
-        } while (stage > 0);
+            ++stage;
+        }
 
-        *out_ptr++ = out1;
-        --sample;
+        output[sample] = out1;
+        ++sample;
     }
 }
 
@@ -122,14 +115,14 @@ CascadedIIRDF1::CascadedIIRDF1()
     coeffs_.resize(stage_ * 5);
     for (size_t i = 0; i < kTestSOS.size(); i++)
     {
-        coeffs_[i * 5 + 0] = kTestSOS[i][0] / kTestSOS[i][3];
-        coeffs_[i * 5 + 1] = kTestSOS[i][1] / kTestSOS[i][3];
-        coeffs_[i * 5 + 2] = kTestSOS[i][2] / kTestSOS[i][3];
-        coeffs_[i * 5 + 3] = kTestSOS[i][4] / kTestSOS[i][3];
-        coeffs_[i * 5 + 4] = kTestSOS[i][5] / kTestSOS[i][3];
+        coeffs_[i].b0 = kTestSOS[i][0] / kTestSOS[i][3];
+        coeffs_[i].b1 = kTestSOS[i][1] / kTestSOS[i][3];
+        coeffs_[i].b2 = kTestSOS[i][2] / kTestSOS[i][3];
+        coeffs_[i].a1 = kTestSOS[i][4] / kTestSOS[i][3];
+        coeffs_[i].a2 = kTestSOS[i][5] / kTestSOS[i][3];
     }
 
-    states_.resize(stage_ * 5, 0);
+    states_.resize(stage_, {0});
 }
 
 void CascadedIIRDF1::process(std::span<const float> input, std::span<float> output)
@@ -140,32 +133,25 @@ void CascadedIIRDF1::process(std::span<const float> input, std::span<float> outp
     size_t sample = input.size();
     while (sample > 0)
     {
-        float* coeffs_ptr = coeffs_.data();
-        float* state_ptr = states_.data();
-        size_t stage = stage_;
+        size_t stage = 0;
         float in1 = *in_ptr++;
         float out1 = 0;
         do
         {
-            float* b = coeffs_ptr;
-            coeffs_ptr += 3;
-            float* a = coeffs_ptr;
-            coeffs_ptr += 2;
+            IIRCoeffs coeffs = coeffs_[stage];
+            IIRState* state = &states_[stage];
 
-            float* state = state_ptr;
-            state_ptr += 5;
+            out1 = coeffs.b0 * in1 + coeffs.b1 * state->x1 + coeffs.b2 * state->x2 - coeffs.a1 * state->y1 -
+                   coeffs.a2 * state->y2;
 
-            state[0] = in1;
-            out1 = b[0] * state[0] + b[1] * state[1] + b[2] * state[2] - a[0] * state[3] - a[1] * state[4];
-
-            state[4] = state[3];
-            state[3] = out1;
-            state[2] = state[1];
-            state[1] = state[0];
+            state->y2 = state->y1;
+            state->y1 = out1;
+            state->x2 = state->x1;
+            state->x1 = in1;
             in1 = out1;
 
-            --stage;
-        } while (stage > 0);
+            ++stage;
+        } while (stage < stage_);
 
         *out_ptr++ = in1;
         --sample;

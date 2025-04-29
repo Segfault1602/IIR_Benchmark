@@ -72,9 +72,13 @@ def plot_all():
     ax.set_ylabel("Time (ns)")
     ax.set_xlabel("Batch Size")
     ax.set_xscale("log")
-    ax.legend()
+    ax.legend(loc="upper right")
     ax.set_xticks(batch_sizes)
     ax.set_xticklabels(batch_sizes, rotation=45)
+
+    # Pad y limit to make room for the legend
+    y_min, y_max = ax.get_ylim()
+    ax.set_ylim(y_min, 30)
 
     platform_name = sys.platform
     if platform_name == "linux":

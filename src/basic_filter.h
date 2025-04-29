@@ -32,6 +32,11 @@ class BasicFilter : public Filter
     std::vector<BiquadFilter> filters_;
 };
 
+struct IIRCoeffs
+{
+    float b0, b1, b2, a1, a2;
+};
+
 class CascadedIIRDF2T : public Filter
 {
   public:
@@ -43,8 +48,13 @@ class CascadedIIRDF2T : public Filter
   private:
     size_t stage_;
 
-    std::vector<float> states_;
-    std::vector<float> coeffs_;
+    struct IIRState
+    {
+        float s0, s1;
+    };
+
+    std::vector<IIRState> states_;
+    std::vector<IIRCoeffs> coeffs_;
 };
 
 class CascadedIIRDF1 : public Filter
@@ -58,6 +68,11 @@ class CascadedIIRDF1 : public Filter
   private:
     size_t stage_;
 
-    std::vector<float> states_;
-    std::vector<float> coeffs_;
+    struct IIRState
+    {
+        float x1, x2, y1, y2;
+    };
+
+    std::vector<IIRState> states_;
+    std::vector<IIRCoeffs> coeffs_;
 };

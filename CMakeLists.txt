@@ -19,6 +19,15 @@ endif()
 
 include(./fetch_deps.cmake)
 
+find_package(IPP)
+if (IPP_FOUND)
+    message(STATUS "IPP found")
+    set(USE_IPP ON)
+else()
+    message(STATUS "IPP not found")
+    set(USE_IPP OFF)
+endif()
+
 add_subdirectory(externals)
 
 add_subdirectory(src)

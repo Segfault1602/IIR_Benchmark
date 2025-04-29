@@ -17,6 +17,10 @@
 #include "vdsp_filter.h"
 #endif
 
+#ifdef IPP_FILTER
+#include "ipp_filter.h"
+#endif
+
 using namespace ankerl;
 using namespace std::chrono_literals;
 
@@ -84,7 +88,7 @@ int main()
 
 #ifdef CMSIS_FILTER_SCALAR
     RunTest<CMSISFilterDF2T>("CMSIS_Scalar_FilterDF2T");
-    RunTest<CMSISFilterDF1>("CMSIS-Scalar_FilterDF1");
+    RunTest<CMSISFilterDF1>("CMSIS_Scalar_FilterDF1");
 #endif
 
 #ifdef VDSP_FILTER
@@ -95,4 +99,11 @@ int main()
     RunTest<CMSISFilterDF2T>("CMSIS_NEON_FilterDF2T");
     RunTest<CMSISFilterDF1>("CMSIS_NEON_FilterDF1");
 #endif
+
+#ifdef IPP_FILTER
+    RunTest<IppFilter>("ipp_filter");
+#endif
+    std::cout << "All tests completed." << std::endl;
+
+    return 0;
 }

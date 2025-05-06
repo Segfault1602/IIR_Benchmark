@@ -8,7 +8,7 @@
 class CMSISFilterDF2T : public Filter
 {
   public:
-    CMSISFilterDF2T();
+    CMSISFilterDF2T(size_t num_stage = 0);
     ~CMSISFilterDF2T() override = default;
 
     void process(std::span<const float> input, std::span<float> output) override;
@@ -23,7 +23,7 @@ class CMSISFilterDF2T : public Filter
 class CMSISFilterDF1 : public Filter
 {
   public:
-    CMSISFilterDF1();
+    CMSISFilterDF1(size_t num_stage = 0);
     ~CMSISFilterDF1() override = default;
 
     void process(std::span<const float> input, std::span<float> output) override;

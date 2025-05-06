@@ -55,3 +55,12 @@ The following results where obtained by running the benchmark on an Intel i9-129
 Compiled with **Clang 20.1.3** with the `-O3` optimization flag.
 
 ![Benchmark Results](results/perf_results_win32.png)
+
+
+## Extra
+
+I've also ran some benchmarks to see how the number of cascaded biquads in the filter affected performance. The results below were run on the macbook air with the M3 chip. The batch size is set to 256 and stays constant. The number of cascaded biquads varies from 1 to 31. 31 biquads is what you would typically find in a 1/3 octave filter bank. Y axis is the time taken to process 1 sample. The X axis is the number of cascaded biquads in the filter.
+
+The results are mostly linear, as expected. One interesting thing to notice is that the CMSIS implementation of the DF2T filter using NEON instructions seem to be struggling if the number of cascaded biquads is not a multiple of 4. Adding dummy biquads to reach the next multiple of 4 might increase performance in some cases. This seems to be less of an issue for smaller block sizes.
+
+![Benchmark Results](results/perf_results_stagedarwin.png)

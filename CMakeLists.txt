@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 20)
 
 project(filter_benchmarks)
 
@@ -20,7 +20,7 @@ endif()
 include(./fetch_deps.cmake)
 
 find_package(IPP)
-if (IPP_FOUND)
+if(IPP_FOUND)
     message(STATUS "IPP found")
     set(USE_IPP ON)
 else()

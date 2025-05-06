@@ -25,10 +25,10 @@ using namespace ankerl;
 using namespace std::chrono_literals;
 
 template <typename T>
-void RunFilter(std::span<const float> input, std::span<float> output, size_t block_size)
+void RunFilter(std::span<const float> input, std::span<float> output, size_t block_size, size_t num_stage = 0)
 {
     assert(input.size() % block_size == 0);
-    T filter;
+    T filter(num_stage);
 
     size_t block_count = input.size() / block_size;
     for (size_t i = 0; i < block_count; ++i)
@@ -71,7 +71,45 @@ void RunTest(const std::string& name)
         bench.run(test_name, [&]() { RunFilter<T>(input, output, kBlockSize[i]); });
     }
 
-    std::string filename = "perf_results_" + name + ".json";
+    std::string filename = "perf_results_block_" + name + ".json";
+    std::ofstream render_out(filename);
+    bench.render(ankerl::nanobench::templates::json(), render_out);
+}
+
+template <typename T>
+void RunStageTest(const std::string& name)
+{
+    constexpr size_t kMaxStage = 31;
+    constexpr size_t kBlockSize = 256;
+    constexpr size_t input_size = 32768;
+
+    nanobench::Bench bench;
+    bench.title(name);
+    bench.relative(true);
+    bench.warmup(100);
+    bench.batch(input_size);
+    bench.unit("samples");
+
+    std::vector<float> input(input_size, 0);
+
+    // Fill with white noise
+    std::default_random_engine generator;
+    std::normal_distribution<double> dist(0, 0.1);
+    for (size_t i = 0; i < input.size(); ++i)
+    {
+        input[i] = dist(generator);
+    }
+
+    std::vector<float> output(input_size, 0);
+
+    for (size_t i = 0; i < kMaxStage; ++i)
+    {
+        // bench.batch(kBlockSize[i]);
+        std::string test_name = name + "_" + std::to_string(i);
+        bench.run(test_name, [&]() { RunFilter<T>(input, output, kBlockSize, i); });
+    }
+
+    std::string filename = "perf_results_stage_" + name + ".json";
     std::ofstream render_out(filename);
     bench.render(ankerl::nanobench::templates::json(), render_out);
 }
@@ -84,20 +122,32 @@ int main()
     RunTest<BasicFilter>("basic_filter");
     RunTest<CascadedIIRDF2T>("CascadedIIRDF2T");
     RunTest<CascadedIIRDF1>("CascadedIIRDF1");
+
+    RunStageTest<CascadedIIRDF2T>("CascadedIIRDF2T");
+    RunStageTest<CascadedIIRDF1>("CascadedIIRDF1");
+    RunStageTest<BasicFilter>("basic_filter");
 #endif
 
 #ifdef CMSIS_FILTER_SCALAR
     RunTest<CMSISFilterDF2T>("CMSIS_Scalar_FilterDF2T");
     RunTest<CMSISFilterDF1>("CMSIS_Scalar_FilterDF1");
+
+    RunStageTest<CMSISFilterDF2T>("CMSIS_Scalar_FilterDF2T");
+    RunStageTest<CMSISFilterDF1>("CMSIS_Scalar_FilterDF1");
 #endif
 
 #ifdef VDSP_FILTER
     RunTest<vDSPFilter>("vdsp_filter");
+
+    RunStageTest<vDSPFilter>("vdsp_filter");
 #endif
 
 #ifdef CMSIS_FILTER_NEON
     RunTest<CMSISFilterDF2T>("CMSIS_NEON_FilterDF2T");
     RunTest<CMSISFilterDF1>("CMSIS_NEON_FilterDF1");
+
+    RunStageTest<CMSISFilterDF2T>("CMSIS_NEON_FilterDF2T");
+    RunStageTest<CMSISFilterDF1>("CMSIS_NEON_FilterDF1");
 #endif
 
 #ifdef IPP_FILTER

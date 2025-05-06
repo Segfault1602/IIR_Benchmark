@@ -1,6 +1,13 @@
 set(FILTER_SOURCE cmsis_filter.cpp basic_filter.cpp)
 set(EXTRA_DEFINES "")
-set(COMPILE_OPTION $<$<CONFIG:Release>:-O3> -ffast-math)
+set(COMPILE_OPTION
+    $<$<CONFIG:Release>:-O3>
+    "-fno-signed-zeros"
+    "-fno-trapping-math"
+    "-fassociative-math"
+    "-fno-math-errno"
+    "-freciprocal-math"
+    "-ftree-vectorize")
 
 if(APPLE)
     set(FILTER_SOURCE ${FILTER_SOURCE} vdsp_filter.cpp)

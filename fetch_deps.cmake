@@ -39,4 +39,14 @@ set(BUILD_TESTING
     OFF
     CACHE BOOL "Disable libsndfile tests!" FORCE)
 
-FetchContent_MakeAvailable(nanobench doctest libsndfile)
+set(MARVIN_PATCH_CMD git apply ${CMAKE_CURRENT_SOURCE_DIR}/compile_option.patch)
+
+FetchContent_Declare(
+    marvin_dsp
+    GIT_REPOSITORY https://github.com/MeijisIrlnd/marvin.git
+    GIT_TAG syl/simd-biquad
+    PATCH_COMMAND ${MARVIN_PATCH_CMD}
+    UPDATE_DISCONNECTED 1
+    GIT_SHALLOW TRUE)
+
+FetchContent_MakeAvailable(nanobench doctest libsndfile marvin_dsp)

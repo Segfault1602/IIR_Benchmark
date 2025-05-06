@@ -2,19 +2,19 @@
 
 #include "filter_coeffs.h"
 
-CMSISFilterDF2T::CMSISFilterDF2T()
+CMSISFilterDF2T::CMSISFilterDF2T(size_t num_stage)
 {
 
-    stage_ = kTestSOS.size();
+    stage_ = num_stage == 0 ? kTestSOS.size() : num_stage;
     coeffs_.resize(stage_ * 5);
 
-    for (size_t i = 0; i < kTestSOS.size(); i++)
+    for (size_t i = 0; i < stage_; i++)
     {
-        coeffs_[i * 5 + 0] = kTestSOS[i][0] / kTestSOS[i][3];
-        coeffs_[i * 5 + 1] = kTestSOS[i][1] / kTestSOS[i][3];
-        coeffs_[i * 5 + 2] = kTestSOS[i][2] / kTestSOS[i][3];
-        coeffs_[i * 5 + 3] = -kTestSOS[i][4] / kTestSOS[i][3];
-        coeffs_[i * 5 + 4] = -kTestSOS[i][5] / kTestSOS[i][3];
+        coeffs_[i * 5 + 0] = kTestSOS[i % kTestSOS.size()][0] / kTestSOS[i % kTestSOS.size()][3];
+        coeffs_[i * 5 + 1] = kTestSOS[i % kTestSOS.size()][1] / kTestSOS[i % kTestSOS.size()][3];
+        coeffs_[i * 5 + 2] = kTestSOS[i % kTestSOS.size()][2] / kTestSOS[i % kTestSOS.size()][3];
+        coeffs_[i * 5 + 3] = -kTestSOS[i % kTestSOS.size()][4] / kTestSOS[i % kTestSOS.size()][3];
+        coeffs_[i * 5 + 4] = -kTestSOS[i % kTestSOS.size()][5] / kTestSOS[i % kTestSOS.size()][3];
     }
 
     states_.resize(stage_ * 8, 0);
@@ -33,18 +33,18 @@ void CMSISFilterDF2T::process(std::span<const float> input, std::span<float> out
     arm_biquad_cascade_df2T_f32(&biquad_instance_, input.data(), output.data(), input.size());
 }
 
-CMSISFilterDF1::CMSISFilterDF1()
+CMSISFilterDF1::CMSISFilterDF1(size_t num_stage)
 {
-    stage_ = kTestSOS.size();
+    stage_ = num_stage == 0 ? kTestSOS.size() : num_stage;
     coeffs_.resize(stage_ * 5);
 
-    for (size_t i = 0; i < kTestSOS.size(); i++)
+    for (size_t i = 0; i < stage_; i++)
     {
-        coeffs_[i * 5 + 0] = kTestSOS[i][0] / kTestSOS[i][3];
-        coeffs_[i * 5 + 1] = kTestSOS[i][1] / kTestSOS[i][3];
-        coeffs_[i * 5 + 2] = kTestSOS[i][2] / kTestSOS[i][3];
-        coeffs_[i * 5 + 3] = -kTestSOS[i][4] / kTestSOS[i][3];
-        coeffs_[i * 5 + 4] = -kTestSOS[i][5] / kTestSOS[i][3];
+        coeffs_[i * 5 + 0] = kTestSOS[i % kTestSOS.size()][0] / kTestSOS[i % kTestSOS.size()][3];
+        coeffs_[i * 5 + 1] = kTestSOS[i % kTestSOS.size()][1] / kTestSOS[i % kTestSOS.size()][3];
+        coeffs_[i * 5 + 2] = kTestSOS[i % kTestSOS.size()][2] / kTestSOS[i % kTestSOS.size()][3];
+        coeffs_[i * 5 + 3] = -kTestSOS[i % kTestSOS.size()][4] / kTestSOS[i % kTestSOS.size()][3];
+        coeffs_[i * 5 + 4] = -kTestSOS[i % kTestSOS.size()][5] / kTestSOS[i % kTestSOS.size()][3];
     }
 
     states_.resize(stage_ * 8, 0);

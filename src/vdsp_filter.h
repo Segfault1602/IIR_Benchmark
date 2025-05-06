@@ -9,7 +9,7 @@
 class vDSPFilter : public Filter
 {
   public:
-    vDSPFilter();
+    vDSPFilter(size_t num_stage = 0);
     ~vDSPFilter() override = default;
 
     void process(std::span<const float> input, std::span<float> output) override;

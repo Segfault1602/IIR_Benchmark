@@ -23,7 +23,7 @@ class BiquadFilter
 class BasicFilter : public Filter
 {
   public:
-    BasicFilter();
+    BasicFilter(size_t num_stage = 0);
     ~BasicFilter() override = default;
 
     void process(std::span<const float> input, std::span<float> output) override;
@@ -40,7 +40,7 @@ struct IIRCoeffs
 class CascadedIIRDF2T : public Filter
 {
   public:
-    CascadedIIRDF2T();
+    CascadedIIRDF2T(size_t num_stage = 0);
     ~CascadedIIRDF2T() override = default;
 
     void process(std::span<const float> input, std::span<float> output) override;
@@ -60,7 +60,7 @@ class CascadedIIRDF2T : public Filter
 class CascadedIIRDF1 : public Filter
 {
   public:
-    CascadedIIRDF1();
+    CascadedIIRDF1(size_t num_stage = 0);
     ~CascadedIIRDF1() override = default;
 
     void process(std::span<const float> input, std::span<float> output) override;

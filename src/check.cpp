@@ -16,6 +16,10 @@
 #include "ipp_filter.h"
 #endif
 
+#ifdef STEAMAUDIO_FILTER
+#include "steamaudio_filter.h"
+#endif
+
 TEST_CASE_TEMPLATE_DEFINE("Filter", T, test_id)
 {
     SF_INFO in_info;
@@ -40,7 +44,7 @@ TEST_CASE_TEMPLATE_DEFINE("Filter", T, test_id)
     std::vector<float> output_buffer(input_buffer.size(), 0.f);
 
     T filter;
-    constexpr size_t kBlockSize = 64;
+    constexpr size_t kBlockSize = 128;
     size_t i = 0;
     while ((i + kBlockSize) < input_buffer.size())
     {
@@ -96,5 +100,9 @@ TEST_CASE_TEMPLATE_INVOKE(test_id, CMSISFilterDF2T, CMSISFilterDF1, BasicFilter,
 #ifdef IPP_FILTER
                           ,
                           IppFilter
+#endif
+#ifdef STEAMAUDIO_FILTER
+                          ,
+                          SteamAudioFilter
 #endif
 );

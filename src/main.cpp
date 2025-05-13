@@ -21,6 +21,10 @@
 #include "ipp_filter.h"
 #endif
 
+#ifdef STEAMAUDIO_FILTER
+#include "steamaudio_filter.h"
+#endif
+
 using namespace ankerl;
 using namespace std::chrono_literals;
 
@@ -66,7 +70,7 @@ void RunTest(const std::string& name)
 
     for (size_t i = 0; i < kBlockSize.size(); ++i)
     {
-        // bench.batch(kBlockSize[i]);
+
         std::string test_name = name + "_" + std::to_string(kBlockSize[i]);
         bench.run(test_name, [&]() { RunFilter<T>(input, output, kBlockSize[i]); });
     }
@@ -80,15 +84,14 @@ template <typename T>
 void RunStageTest(const std::string& name)
 {
     constexpr size_t kMaxStage = 31;
-    constexpr size_t kBlockSize = 256;
-    constexpr size_t input_size = 32768;
+    constexpr size_t kBlockSize = 128;
+    constexpr size_t input_size = kBlockSize;
 
     nanobench::Bench bench;
     bench.title(name);
     bench.relative(true);
     bench.warmup(100);
-    bench.batch(input_size);
-    bench.unit("samples");
+    bench.minEpochIterations(10000);
 
     std::vector<float> input(input_size, 0);
 
@@ -102,11 +105,12 @@ void RunStageTest(const std::string& name)
 
     std::vector<float> output(input_size, 0);
 
-    for (size_t i = 0; i < kMaxStage; ++i)
+    for (size_t i = 1; i < kMaxStage; ++i)
     {
+        T filter(i);
         // bench.batch(kBlockSize[i]);
         std::string test_name = name + "_" + std::to_string(i);
-        bench.run(test_name, [&]() { RunFilter<T>(input, output, kBlockSize, i); });
+        bench.run(test_name, [&]() { filter.process(input, output); });
     }
 
     std::string filename = "perf_results_stage_" + name + ".json";
@@ -126,6 +130,11 @@ int main()
     RunStageTest<CascadedIIRDF2T>("CascadedIIRDF2T");
     RunStageTest<CascadedIIRDF1>("CascadedIIRDF1");
     RunStageTest<BasicFilter>("basic_filter");
+#endif
+
+#ifdef STEAMAUDIO_FILTER
+    RunTest<SteamAudioFilter>("SteamAudioFilter");
+    RunStageTest<SteamAudioFilter>("SteamAudioFilter");
 #endif
 
 #ifdef CMSIS_FILTER_SCALAR

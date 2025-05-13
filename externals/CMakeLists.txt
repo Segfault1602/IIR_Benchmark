@@ -8,12 +8,14 @@ set(CMSIS_FILTER_SOURCE
 
 add_library(cmsis_scalar ${CMSIS_FILTER_SOURCE})
 target_include_directories(cmsis_scalar PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/CMSIS-DSP/Include)
-target_compile_definitions(cmsis_scalar PRIVATE -DARM_MATH_LOOPUNROLL -D__GNUC_PYTHON__ )
+target_compile_definitions(cmsis_scalar PRIVATE -DARM_MATH_LOOPUNROLL -D__GNUC_PYTHON__)
 target_compile_options(cmsis_scalar PRIVATE -O3)
 
-if (NEON_FILTER)
+if(NEON_FILTER)
     add_library(cmsis_neon ${CMSIS_FILTER_SOURCE})
     target_include_directories(cmsis_neon PUBLIC CMSIS-DSP/Include)
     target_compile_definitions(cmsis_neon PUBLIC -DARM_MATH_NEON -DARM_MATH_LOOPUNROLL)
     target_compile_options(cmsis_neon PRIVATE -O3)
 endif()
+
+add_subdirectory(steamaudio_iir)

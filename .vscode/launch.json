@@ -20,7 +20,9 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/src/Debug/check",
-            "args": [],
+            "args": [
+                "-tc=Filter<SteamAudioFilter>"
+            ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

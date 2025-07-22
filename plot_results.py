@@ -11,7 +11,7 @@ def run_all():
         os.path.dirname(os.path.abspath(__file__)), "build", "src", "Release"
     )
 
-    exe_files = [os.path.join(exe_path, f) for f in os.listdir(exe_path)]
+    exe_files = [os.path.join(exe_path, f) for f in os.listdir(exe_path) if "perf" in f]
 
     # run all executables
     for exe_file in exe_files:
@@ -62,13 +62,21 @@ def plot_all():
         values = sorted(values, key=lambda x: x[0])
         batch_sizes = [v[0] for v in values]
         times = [v[1] for v in values]
+        marker = "o"
+        linestyle = "-"
+        if "NeonIIRFilter" in name:
+            marker = "s"
+        if "CMSIS" in name:
+            marker = "D"
+            linestyle = "--"
         ax.plot(
             batch_sizes,
             times,
             label=perf_result[len(json_prefix) : -5],
-            marker="o",
+            marker=marker,
             markersize=5,
-            linewidth=2,
+            linestyle=linestyle,
+            linewidth=1,
         )
     ax.set_ylabel("Time (ns)")
     ax.set_xlabel("Batch Size")
@@ -97,6 +105,12 @@ def plot_all():
     OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "results")
     filename = "perf_results_" + sys.platform + ".png"
     OUT_FILE = os.path.join(OUT_DIR, filename)
+    fig.savefig(OUT_FILE, dpi=300)
+
+    filename = "perf_results_zoom_" + sys.platform + ".png"
+    OUT_FILE = os.path.join(OUT_DIR, filename)
+    ax.set_ylim(0, 70)
+    ax.set_title(f"Performance Results for {platform_name} (Zoomed In)")
     fig.savefig(OUT_FILE, dpi=300)
     # plt.show()
 
@@ -171,7 +185,7 @@ def plot_stage():
 
 if __name__ == "__main__":
 
-    run_all()
+    # run_all()
 
     plot_all()
     plot_stage()

@@ -98,6 +98,7 @@
         "codecvt": "cpp",
         "condition_variable": "cpp",
         "memory_resource": "cpp",
-        "text_encoding": "cpp"
+        "text_encoding": "cpp",
+        "valarray": "cpp"
     }
 }

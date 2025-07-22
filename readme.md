@@ -40,6 +40,7 @@ The following results where obtained by running the benchmark on a 2024 Macbook 
 
 
 ![Benchmark Results](results/perf_results_darwin.png)
+![Benchmark Results](results/perf_results_zoom_darwin.png)
 
 ### Intel (Windows)
 

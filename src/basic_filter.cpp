@@ -86,12 +86,62 @@ void CascadedIIRDF2T::process(std::span<const float> input, std::span<float> out
     float* out_ptr = output.data();
 
     size_t sample = 0;
-    while (sample < input.size())
+    const size_t kSize = input.size();
+    const size_t unroll_size = kSize & ~3;
+    while (sample < unroll_size)
+    {
+        size_t stage = 0;
+        float in1 = input[sample];
+        float in2 = input[sample + 1];
+        float in3 = input[sample + 2];
+        float in4 = input[sample + 3];
+
+        float out1 = 0;
+        float out2 = 0;
+        float out3 = 0;
+        float out4 = 0;
+        while (stage < stage_)
+        {
+            IIRCoeffs coeffs = coeffs_[stage];
+            float s0 = states_[stage].s0;
+            float s1 = states_[stage].s1;
+
+#define COMPUTE_SAMPLE(x, y)                                                                                           \
+    y = coeffs.b0 * x + s0;                                                                                            \
+    s0 = coeffs.b1 * x + s1;                                                                                           \
+    s0 -= coeffs.a1 * y;                                                                                               \
+    s1 = coeffs.b2 * x;                                                                                                \
+    s1 -= coeffs.a2 * y;
+
+            COMPUTE_SAMPLE(in1, out1);
+            COMPUTE_SAMPLE(in2, out2);
+            COMPUTE_SAMPLE(in3, out3);
+            COMPUTE_SAMPLE(in4, out4);
+
+            in1 = out1;
+            in2 = out2;
+            in3 = out3;
+            in4 = out4;
+
+            states_[stage].s0 = s0;
+            states_[stage].s1 = s1;
+
+            ++stage;
+        }
+
+        output[sample] = out1;
+        output[sample + 1] = out2;
+        output[sample + 2] = out3;
+        output[sample + 3] = out4;
+        sample += 4;
+    }
+
+    while (sample < kSize)
     {
         size_t stage = 0;
         float in1 = input[sample];
         float out1 = 0;
-        while (stage < stage_)
+        do
         {
             IIRCoeffs coeffs = coeffs_[stage];
             IIRState* state = &states_[stage];
@@ -102,12 +152,79 @@ void CascadedIIRDF2T::process(std::span<const float> input, std::span<float> out
 
             in1 = out1;
             ++stage;
-        }
+        } while (stage < stage_);
 
         output[sample] = out1;
         ++sample;
     }
 }
+
+// void CascadedIIRDF2T::process(std::span<const float> input, std::span<float> output)
+// {
+//     const float* in_ptr = input.data();
+//     float* out_ptr = output.data();
+//     const size_t kSize = input.size();
+
+//     size_t stage = 0;
+//     do
+//     {
+//         IIRCoeffs coeffs = coeffs_[stage];
+//         IIRState* state = &states_[stage];
+//         float b0 = coeffs.b0;
+//         float b1 = coeffs.b1;
+//         float b2 = coeffs.b2;
+//         float a1 = coeffs.a1;
+//         float a2 = coeffs.a2;
+
+//         float d1 = state->s0;
+//         float d2 = state->s1;
+
+//         size_t sample = 0;
+//         const size_t unroll_size = kSize & ~3;
+//         while (sample < kSize)
+//         {
+//             float in1 = in_ptr[sample];
+//             float out = b0 * in1 + state->s0;
+//             state->s0 = b1 * in1 - a1 * out + state->s1;
+//             state->s1 = b2 * in1 - a2 * out;
+//             out_ptr[sample] = out;
+
+//             in1 = in_ptr[sample + 1];
+//             out = b0 * in1 + state->s0;
+//             state->s0 = b1 * in1 - a1 * out + state->s1;
+//             state->s1 = b2 * in1 - a2 * out;
+//             out_ptr[sample + 1] = out;
+
+//             in1 = in_ptr[sample + 2];
+//             out = b0 * in1 + state->s0;
+//             state->s0 = b1 * in1 - a1 * out + state->s1;
+//             state->s1 = b2 * in1 - a2 * out;
+//             out_ptr[sample + 2] = out;
+
+//             in1 = in_ptr[sample + 3];
+//             out = b0 * in1 + state->s0;
+//             state->s0 = b1 * in1 - a1 * out + state->s1;
+//             state->s1 = b2 * in1 - a2 * out;
+//             out_ptr[sample + 3] = out;
+
+//             sample += 4;
+//         }
+
+//         while (sample < unroll_size)
+//         {
+//             float in1 = in_ptr[sample];
+//             float out1 = coeffs.b0 * in1 + state->s0;
+//             state->s0 = coeffs.b1 * in1 - coeffs.a1 * out1 + state->s1;
+//             state->s1 = coeffs.b2 * in1 - coeffs.a2 * out1;
+
+//             out_ptr[sample] = out1;
+//             ++sample;
+//         }
+
+//         in_ptr = out_ptr;
+//         ++stage;
+//     } while (stage < stage_);
+// }
 
 CascadedIIRDF1::CascadedIIRDF1(size_t num_stage)
 {

@@ -39,4 +39,10 @@ set(BUILD_TESTING
     OFF
     CACHE BOOL "Disable libsndfile tests!" FORCE)
 
-FetchContent_MakeAvailable(nanobench doctest libsndfile)
+FetchContent_Declare(
+    kfr
+    GIT_REPOSITORY https://github.com/kfrlib/kfr.git
+    GIT_TAG 6.2.0
+)
+
+FetchContent_MakeAvailable(nanobench doctest libsndfile kfr)

@@ -9,6 +9,10 @@
 
 #include "basic_filter.h"
 
+#ifdef BASIC_FILTER
+#include "kfr_filter.h"
+#endif
+
 #if defined(CMSIS_FILTER_SCALAR) || defined(CMSIS_FILTER_NEON)
 #include "cmsis_filter.h"
 #endif
@@ -23,6 +27,10 @@
 
 #ifdef STEAMAUDIO_FILTER
 #include "steamaudio_filter.h"
+#endif
+
+#ifdef NEON_FILTER
+#include "neon_filter.h"
 #endif
 
 using namespace ankerl;
@@ -47,29 +55,30 @@ template <typename T>
 void RunTest(const std::string& name)
 {
     const std::vector<size_t> kBlockSize = {1, 4, 8, 16, 32, 64, 128, 256, 512, 1024};
-    constexpr size_t input_size = 32768;
 
     nanobench::Bench bench;
     bench.title(name);
     bench.relative(true);
     bench.warmup(100);
-    bench.batch(input_size);
     bench.unit("samples");
-
-    std::vector<float> input(input_size, 0);
-
-    // Fill with white noise
-    std::default_random_engine generator;
-    std::normal_distribution<double> dist(0, 0.1);
-    for (size_t i = 0; i < input.size(); ++i)
-    {
-        input[i] = dist(generator);
-    }
-
-    std::vector<float> output(input_size, 0);
+    // bench.timeUnit(1us, "us");
 
     for (size_t i = 0; i < kBlockSize.size(); ++i)
     {
+        const size_t input_size = kBlockSize[i];
+        bench.minEpochIterations(200000 / input_size);
+        bench.batch(input_size);
+        std::vector<float> input(input_size, 0);
+
+        // Fill with white noise
+        std::default_random_engine generator;
+        std::normal_distribution<double> dist(0, 0.1);
+        for (size_t i = 0; i < input.size(); ++i)
+        {
+            input[i] = dist(generator);
+        }
+
+        std::vector<float> output(input_size, 0);
 
         std::string test_name = name + "_" + std::to_string(kBlockSize[i]);
         bench.run(test_name, [&]() { RunFilter<T>(input, output, kBlockSize[i]); });
@@ -108,7 +117,7 @@ void RunStageTest(const std::string& name)
     for (size_t i = 1; i < kMaxStage; ++i)
     {
         T filter(i);
-        // bench.batch(kBlockSize[i]);
+        bench.batch(kBlockSize);
         std::string test_name = name + "_" + std::to_string(i);
         bench.run(test_name, [&]() { filter.process(input, output); });
     }
@@ -126,10 +135,12 @@ int main()
     RunTest<BasicFilter>("basic_filter");
     RunTest<CascadedIIRDF2T>("CascadedIIRDF2T");
     RunTest<CascadedIIRDF1>("CascadedIIRDF1");
+    RunTest<KfrFilter>("KfrFilter");
 
     RunStageTest<CascadedIIRDF2T>("CascadedIIRDF2T");
     RunStageTest<CascadedIIRDF1>("CascadedIIRDF1");
     RunStageTest<BasicFilter>("basic_filter");
+    RunStageTest<KfrFilter>("KfrFilter");
 #endif
 
 #ifdef STEAMAUDIO_FILTER
@@ -162,6 +173,11 @@ int main()
 #ifdef IPP_FILTER
     RunTest<IppFilter>("ipp_filter");
 #endif
+
+#ifdef NEON_FILTER
+    RunTest<NeonIIRFilter>("NeonIIRFilter");
+#endif
+
     std::cout << "All tests completed." << std::endl;
 
     return 0;

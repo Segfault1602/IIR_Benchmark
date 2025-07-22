@@ -17,17 +17,27 @@
         },
         {
             "name": "Check",
-            "type": "cppdbg",
+            "type": "lldb-dap",
             "request": "launch",
-            "program": "${workspaceFolder}/build/src/Debug/check",
+            "program": "${workspaceFolder}/build/src/Debug/check_neon",
             "args": [
-                "-tc=Filter<SteamAudioFilter>"
+                "-tc=Filter<CMSISFilterDF2T>"
             ],
-            "stopAtEntry": false,
+            "stopOnEntry": false,
             "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": false,
-            "MIMode": "lldb"
+            "env": [],
+            "runInTerminal": false,
+        },
+        {
+            "name": "NeonTest",
+            "type": "lldb-dap",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/src/RelWithDebInfo/neon_test",
+            "args": [],
+            "stopOnEntry": false,
+            "cwd": "${workspaceFolder}",
+            "env": [],
+            "runInTerminal": false,
         },
         {
             "name": "Perf",

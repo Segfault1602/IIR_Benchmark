@@ -72,3 +72,51 @@ endif()
 
 add_executable(neon_test neon_test.cpp neon_filter.cpp steamaudio_filter.cpp)
 target_link_libraries(neon_test PUBLIC steamaudio_iir)
+# ==================== Multi-channel biquad bank benchmark ====================
+# The single-channel Filter interface above cannot represent implementations that vectorize across
+# channels, so these targets use the separate MultiChannelFilter interface. Per-channel libraries
+# are instantiated N times, which is the realistic alternative to a true multi-channel bank.
+
+set(MC_SOURCES
+    mc_scalar.cpp
+    mc_simd_bank.cpp
+    mc_kfr.cpp
+    mc_steamaudio.cpp
+    sffdn_bank/audio_buffer.cpp)
+
+set(MC_LIBS steamaudio_iir kfr kfr_dsp)
+set(MC_DEFINES "")
+
+if(APPLE)
+    list(APPEND MC_SOURCES mc_vdsp_biquad.cpp mc_vdsp_biquadm.cpp)
+    list(APPEND MC_LIBS "-framework Accelerate")
+    list(APPEND MC_DEFINES -DMC_HAS_VDSP)
+endif()
+
+function(sffdn_add_mc_target target_name)
+    cmake_parse_arguments(ARG "NEON" "" "EXTRA_SOURCES;EXTRA_LIBS;EXTRA_DEFINES" ${ARGN})
+
+    add_executable(${target_name} ${ARG_EXTRA_SOURCES} ${MC_SOURCES} mc_cmsis.cpp)
+    target_link_libraries(${target_name} PUBLIC ${MC_LIBS} ${ARG_EXTRA_LIBS})
+    target_compile_options(${target_name} PRIVATE "${COMPILE_OPTION}")
+    target_compile_definitions(${target_name} PRIVATE ${MC_DEFINES} ${ARG_EXTRA_DEFINES})
+    target_include_directories(
+        ${target_name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/sffdn_bank)
+    # simd_biquad_bank.h uses std::span::first<N>() and a requires-clause.
+    target_compile_features(${target_name} PRIVATE cxx_std_20)
+endfunction()
+
+sffdn_add_mc_target(
+    multichannel_perf EXTRA_SOURCES mc_main.cpp EXTRA_LIBS nanobench cmsis_scalar)
+
+sffdn_add_mc_target(
+    multichannel_check EXTRA_SOURCES mc_check.cpp EXTRA_LIBS doctest cmsis_scalar)
+target_include_directories(multichannel_check PRIVATE ${doctest_SOURCE_DIR}/doctest)
+
+if(NEON_FILTER)
+    sffdn_add_mc_target(
+        multichannel_perf_neon
+        EXTRA_SOURCES mc_main.cpp
+        EXTRA_LIBS nanobench cmsis_neon
+        EXTRA_DEFINES -DARM_MATH_NEON)
+endif()

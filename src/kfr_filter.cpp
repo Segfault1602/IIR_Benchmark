@@ -11,12 +11,13 @@ KfrFilter::KfrFilter(size_t num_stage)
     // a0, a1, a2, b0, b1, b2
     for (size_t i = 0; i < stage_; i++)
     {
+        // KFR's biquad_section field order is {a0, a1, a2, b0, b1, b2}; the numerator must NOT be negated.
         coeffs_[i * 6 + 0] = kTestSOS[i % kTestSOS.size()][3];
         coeffs_[i * 6 + 1] = kTestSOS[i % kTestSOS.size()][4];
         coeffs_[i * 6 + 2] = kTestSOS[i % kTestSOS.size()][5];
-        coeffs_[i * 6 + 3] = -kTestSOS[i % kTestSOS.size()][0];
-        coeffs_[i * 6 + 4] = -kTestSOS[i % kTestSOS.size()][1];
-        coeffs_[i * 6 + 5] = -kTestSOS[i % kTestSOS.size()][2];
+        coeffs_[i * 6 + 3] = kTestSOS[i % kTestSOS.size()][0];
+        coeffs_[i * 6 + 4] = kTestSOS[i % kTestSOS.size()][1];
+        coeffs_[i * 6 + 5] = kTestSOS[i % kTestSOS.size()][2];
     }
 
     states_.resize(stage_ * 8, 0);

@@ -36,7 +36,7 @@ The measurements are done using the [nanobench](https://nanobench.ankerl.com/) l
 
 ### ARM (MacOS)
 
-The following results where obtained by running the benchmark on a 2024 Macbook Air with M3 chip. The plots show the time taken to process 1 sample. The batch size indicates the number of samples processed by the filter at once. Compiled with **AppleClang 17.0.0.17000013** with the `-O3` optimization flag.
+The following results where obtained by running the benchmark on a 2024 Macbook Air with M3 chip. The plots show the time taken to process 1 sample. The batch size indicates the number of samples processed by the filter at once. Compiled with Clang 21.0.0 with the `-O3` optimization flag.
 
 
 ![Benchmark Results](results/perf_results_darwin.png)
@@ -66,3 +66,26 @@ I've also ran some benchmarks to see how the number of cascaded biquads in the f
 The results are mostly linear, as expected. One interesting thing to notice is that the CMSIS implementation of the DF2T filter using NEON instructions seem to be struggling if the number of cascaded biquads is not a multiple of 4. Adding dummy biquads to reach the next multiple of 4 might increase performance in some cases. This seems to be less of an issue for smaller block sizes.
 
 ![Benchmark Results](results/perf_results_stagedarwin.png)
+
+## Multi-channel biquad bank
+
+### What is being compared
+
+The multi-channel benchmark compares a bank that vectorizes across channels (`SimdBiquadBank`) against single-channel libraries instantiated N times (`ScalarDF2T`, `KFR_xN`, `CMSIS_DF2T_xN`, `SteamAudio_xN`, `vDSP_biquad_xN`), plus `vDSP_biquadm`, which is the only other backend here that vectorizes across the channel dimension rather than filtering each channel independently.
+
+Results below were measured with `multichannel_perf` in a Release build. Run it as:
+`cmake --build build --config Release --target multichannel_perf -j` and then `./build/src/Release/multichannel_perf`.
+
+### Methodology
+
+The coefficients are the same for every backend, but every channel gets a different filter section sequence. All setup and coefficient conversion happen in `prepare()`, outside the timed region. Filters are constructed once and reused across the block instead of being rebuilt per call. Channel data is presented deinterleaved (meaning each channel's samples are contiguous in memory).
+
+Fresh results below are from a local run on this Apple M3 system with Apple clang 21.0.0, using `multichannel_perf`. The long-cascade case uses a 12-section cascade to match the single-channel benchmark's `kTestSOS`, so results from the two benchmarks can be compared directly.
+
+### Results
+
+![Multi-channel benchmark results](results/multichannel_darwin.png)
+
+### Licensing
+
+KFR is GPL-2.0-or-later/commercial, so the benchmark binaries are GPL.

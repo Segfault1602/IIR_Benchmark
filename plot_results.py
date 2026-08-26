@@ -185,7 +185,7 @@ def plot_stage():
 
 if __name__ == "__main__":
 
-    # run_all()
+    run_all()
 
     plot_all()
     plot_stage()

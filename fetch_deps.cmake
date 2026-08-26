@@ -3,7 +3,7 @@ include(FetchContent)
 FetchContent_Declare(
     nanobench
     GIT_REPOSITORY https://github.com/martinus/nanobench.git
-    GIT_TAG v4.1.0
+    GIT_TAG v4.6.0
     GIT_SHALLOW TRUE)
 
 FetchContent_Declare(
@@ -42,7 +42,7 @@ set(BUILD_TESTING
 FetchContent_Declare(
     kfr
     GIT_REPOSITORY https://github.com/kfrlib/kfr.git
-    GIT_TAG 6.2.0
+    GIT_TAG 7.1.0
 )
 
 FetchContent_MakeAvailable(nanobench doctest libsndfile kfr)

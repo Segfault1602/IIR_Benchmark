@@ -36,11 +36,15 @@
 using namespace ankerl;
 using namespace std::chrono_literals;
 
+// The filter is passed in rather than constructed here so that coefficient conversion and setup
+// (which for some backends means an allocation, e.g. vDSP_biquad_CreateSetup or a KFR filter
+// object) stay outside the timed region. Constructing inside meant every timed iteration paid the
+// full setup cost amortized over a single block, which dominated the small-block measurements.
+// RunStageTest already constructs outside its timed lambda; this matches that.
 template <typename T>
-void RunFilter(std::span<const float> input, std::span<float> output, size_t block_size, size_t num_stage = 0)
+void RunFilter(T& filter, std::span<const float> input, std::span<float> output, size_t block_size)
 {
     assert(input.size() % block_size == 0);
-    T filter(num_stage);
 
     size_t block_count = input.size() / block_size;
     for (size_t i = 0; i < block_count; ++i)
@@ -81,7 +85,8 @@ void RunTest(const std::string& name)
         std::vector<float> output(input_size, 0);
 
         std::string test_name = name + "_" + std::to_string(kBlockSize[i]);
-        bench.run(test_name, [&]() { RunFilter<T>(input, output, kBlockSize[i]); });
+        T filter(0);
+        bench.run(test_name, [&]() { RunFilter<T>(filter, input, output, kBlockSize[i]); });
     }
 
     std::string filename = "perf_results_block_" + name + ".json";

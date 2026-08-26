@@ -92,7 +92,7 @@ def plot_multichannel(results_by_combo, output_path):
 
         for backend, values_by_channel in sorted(backend_data.items()):
             values = [values_by_channel[channel] for channel in channel_counts]
-            linewidth = 2.5 if backend == "SimdBiquadBank" else 1.5
+            linewidth = 2.5 if backend.startswith("SimdBiquadBank") else 1.5
             ax.plot(positions, values, label=backend, marker="o", linewidth=linewidth)
 
         ax.set_title(f"stages={stages}, block={block}")

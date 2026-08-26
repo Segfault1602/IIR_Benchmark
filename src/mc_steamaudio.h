@@ -19,6 +19,6 @@ class McSteamAudio : public MultiChannelFilter
     const char* name() const override;
 
   private:
-    std::vector<std::vector<ipl::IIRFilterer>> filterers_;
+    std::vector<std::vector<ipl::IIR2Filterer>> filterers_;
     uint32_t stages_ = 0;
 };

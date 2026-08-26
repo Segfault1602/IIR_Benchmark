@@ -9,7 +9,21 @@ The different implementations are:
 - **Cascaded IIR DF1** : A scalar implementation of the DF1 structure, but as opposed to the CMSIS implementation, each samples is processed by every stages before moving the next sample.
 - **vDSP** : A vectorized implementation of the Direct Form I (DF1) structure using Apple's Accelerate framework.
 - **IPP** : A vectorized implementation of the Direct Form II (DF2) structure using Intel's Integrated Performance Primitives (IPP) library (`ippsIIRInit_BiQuad_32f`).
-- **SteamAudio** : A vectorized IIR filter from the [SteamAudio library](https://github.com/ValveSoftware/steam-audio).
+- **SteamAudio** : A vectorized IIR filter from the [SteamAudio library](https://github.com/ValveSoftware/steam-audio). It reformulates the biquad recurrence so a whole block of outputs is computed from one coefficient matrix, and picks between a 4-wide and an 8-wide kernel at run time (`IPL_ENABLE_FLOAT8`, enabled on x86, dispatched on AVX support).
+
+## Building
+
+The CMSIS-DSP dependency is a git submodule, so it must be initialized first. `plot_results.py` expects the executables in `build/src/Release`, so use a multi-config generator:
+
+```sh
+git submodule update --init --recursive
+cmake -S . -B build -G "Ninja Multi-Config" \
+    -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ \
+    -DCMAKE_C_FLAGS="-march=native" -DCMAKE_CXX_FLAGS="-march=native"
+cmake --build build --config Release -j
+```
+
+`-march=native` lets the x86 backends use SSE/AVX2/FMA. Intel IPP and Apple vDSP are detected automatically and their targets are skipped when unavailable. On x86 the SteamAudio filter is built with `IPL_ENABLE_FLOAT8`, which adds its 8-wide AVX kernel; the choice between that and the 4-wide kernel is made at run time from the CPU's reported SIMD level, so the binary still runs on pre-AVX hardware. Correctness is verified with `./build/src/Release/check` and `./build/src/Release/multichannel_check`.
 
 ## Methodology
 
@@ -42,7 +56,7 @@ The following results where obtained by running the benchmark on a 2024 Macbook 
 ![Benchmark Results](results/perf_results_darwin.png)
 ![Benchmark Results](results/perf_results_zoom_darwin.png)
 
-### Intel (Windows)
+### Intel (x86)
 
 The following results where obtained by running the benchmark on an Intel i9-12900K CPU with the following specs:
 
@@ -54,9 +68,11 @@ The following results where obtained by running the benchmark on an Intel i9-129
 | L2 Cache | 8 x 1.25 MB + 2 x 2 MB |
 | L3 Cache | 30 MB |
 
-Compiled with **Clang 20.1.3** with the `-O3` optimization flag.
+Compiled with **Clang 22.1.8** using `-O3 -march=native` (AVX2 + FMA; this CPU has no AVX-512).
 
-![Benchmark Results](results/perf_results_win32.png)
+
+![Benchmark Results](results/perf_results_linux.png)
+![Benchmark Results](results/perf_results_zoom_linux.png)
 
 
 ## Extra
@@ -71,7 +87,9 @@ The results are mostly linear, as expected. One interesting thing to notice is t
 
 ### What is being compared
 
-The multi-channel benchmark compares a bank that vectorizes across channels (`SimdBiquadBank`) against single-channel libraries instantiated N times (`ScalarDF2T`, `KFR_xN`, `CMSIS_DF2T_xN`, `SteamAudio_xN`, `vDSP_biquad_xN`), plus `vDSP_biquadm`, which is the only other backend here that vectorizes across the channel dimension rather than filtering each channel independently.
+The multi-channel benchmark compares a bank that vectorizes across channels (`SimdBiquadBank`, built once per SIMD width) against single-channel libraries instantiated N times (`ScalarDF2T`, `KFR_xN`, `CMSIS_DF2T_xN`, `SteamAudio_<kernel>_xN`, `IPP_xN`, `vDSP_biquad_xN`), plus `vDSP_biquadm`, which is the only other backend here that vectorizes across the channel dimension rather than filtering each channel independently.
+
+Backends that have more than one kernel say which one produced the numbers. `SimdBiquadBank_SSE` / `SimdBiquadBank_AVX` are separate compilations, whereas SteamAudio picks its width at run time, so `SteamAudio_AVX_xN` reflects what `gSIMDLevel()` actually selected on the machine that produced the plot.
 
 Results below were measured with `multichannel_perf` in a Release build. Run it as:
 `cmake --build build --config Release --target multichannel_perf -j` and then `./build/src/Release/multichannel_perf`.
@@ -86,6 +104,8 @@ Fresh results below are from a local run on this Apple M3 system with Apple clan
 
 ![Multi-channel benchmark results](results/multichannel_darwin.png)
 
+![Multi-channel benchmark results](results/multichannel_linux.png)
+
 ### Licensing
 
-KFR is GPL-2.0-or-later/commercial, so the benchmark binaries are GPL.
+KFR is GPL-2.0-or-later/commercial, so the benchmark binaries are GPL. SteamAudio is Apache-2.0 and is fetched at build time rather than redistributed here.

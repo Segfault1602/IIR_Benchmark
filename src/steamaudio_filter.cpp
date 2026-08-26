@@ -9,7 +9,7 @@ SteamAudioFilter::SteamAudioFilter(size_t num_stage)
 
     for (size_t i = 0; i < stage; i++)
     {
-        ipl::IIR iir;
+        ipl::IIR2 iir;
         iir.b0 = kTestSOS[i % kTestSOS.size()][0] / kTestSOS[i % kTestSOS.size()][3];
         iir.b1 = kTestSOS[i % kTestSOS.size()][1] / kTestSOS[i % kTestSOS.size()][3];
         iir.b2 = kTestSOS[i % kTestSOS.size()][2] / kTestSOS[i % kTestSOS.size()][3];

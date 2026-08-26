@@ -7,7 +7,7 @@
 class IppFilter : public Filter
 {
   public:
-    IppFilter();
+    IppFilter(size_t num_stage = 0);
     ~IppFilter() override;
 
     void process(std::span<const float> input, std::span<float> output) override;

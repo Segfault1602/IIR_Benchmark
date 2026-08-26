@@ -27,6 +27,7 @@
 
 #ifdef STEAMAUDIO_FILTER
 #include "steamaudio_filter.h"
+#include "steamaudio_kernel.h"
 #endif
 
 #ifdef NEON_FILTER
@@ -149,8 +150,8 @@ int main()
 #endif
 
 #ifdef STEAMAUDIO_FILTER
-    RunTest<SteamAudioFilter>("SteamAudioFilter");
-    RunStageTest<SteamAudioFilter>("SteamAudioFilter");
+    RunTest<SteamAudioFilter>(std::string("SteamAudioFilter_") + SteamAudioKernelName());
+    RunStageTest<SteamAudioFilter>(std::string("SteamAudioFilter_") + SteamAudioKernelName());
 #endif
 
 #ifdef CMSIS_FILTER_SCALAR

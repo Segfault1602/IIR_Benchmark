@@ -1,4 +1,5 @@
-set(FILTER_SOURCE cmsis_filter.cpp basic_filter.cpp steamaudio_filter.cpp kfr_filter.cpp)
+set(FILTER_SOURCE cmsis_filter.cpp basic_filter.cpp steamaudio_filter.cpp steamaudio_kernel.cpp
+                  kfr_filter.cpp)
 set(EXTRA_DEFINES "")
 set(COMPILE_OPTION
     $<$<CONFIG:Release>:-O3>
@@ -22,7 +23,8 @@ if(USE_IPP)
     set(EXTRA_DEFINES ${EXTRA_DEFINES} -DIPP_FILTER)
 endif()
 
-add_executable(basic_filter_perf main.cpp basic_filter.cpp steamaudio_filter.cpp kfr_filter.cpp)
+add_executable(basic_filter_perf main.cpp basic_filter.cpp steamaudio_filter.cpp
+                                steamaudio_kernel.cpp kfr_filter.cpp)
 target_link_libraries(basic_filter_perf PUBLIC nanobench steamaudio_iir kfr kfr_dsp)
 target_compile_options(basic_filter_perf PRIVATE "${COMPILE_OPTION}")
 target_compile_definitions(basic_filter_perf PRIVATE -DBASIC_FILTER -DSTEAMAUDIO_FILTER)
@@ -70,8 +72,10 @@ if(NEON_FILTER)
 endif()
 
 
-add_executable(neon_test neon_test.cpp neon_filter.cpp steamaudio_filter.cpp)
-target_link_libraries(neon_test PUBLIC steamaudio_iir)
+if(NEON_FILTER)
+    add_executable(neon_test neon_test.cpp neon_filter.cpp steamaudio_filter.cpp)
+    target_link_libraries(neon_test PUBLIC steamaudio_iir)
+endif()
 # ==================== Multi-channel biquad bank benchmark ====================
 # The single-channel Filter interface above cannot represent implementations that vectorize across
 # channels, so these targets use the separate MultiChannelFilter interface. Per-channel libraries
@@ -79,13 +83,43 @@ target_link_libraries(neon_test PUBLIC steamaudio_iir)
 
 set(MC_SOURCES
     mc_scalar.cpp
-    mc_simd_bank.cpp
+    mc_simd_bank_variants.cpp
     mc_kfr.cpp
     mc_steamaudio.cpp
-    sffdn_bank/audio_buffer.cpp)
+    steamaudio_kernel.cpp)
+
+# SimdBiquadBank's vector width is baked in by simd.h at compile time, so comparing SSE against AVX
+# requires compiling the kernel once per width. Renaming the `sfFDN` namespace and the `McSimdBank`
+# class per variant keeps both in one binary without an ODR violation, which matters because it lets
+# every other backend be measured with identical flags in the same run.
+function(sffdn_add_bank_variant variant)
+    cmake_parse_arguments(ARG "" "" "FLAGS" ${ARGN})
+
+    set(target mc_bank_${variant})
+    add_library(${target} OBJECT mc_simd_bank.cpp sffdn_bank/audio_buffer.cpp)
+    target_include_directories(
+        ${target} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/sffdn_bank)
+    target_compile_options(${target} PRIVATE "${COMPILE_OPTION}" ${ARG_FLAGS})
+    target_compile_definitions(
+        ${target}
+        PRIVATE sfFDN=sfFDN_${variant} McSimdBank=McSimdBank${variant}
+                MC_SIMD_BANK_FACTORY=MakeSimdBank${variant})
+    target_compile_features(${target} PRIVATE cxx_std_20)
+endfunction()
+
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|i686|i386")
+    # -mno-avx also switches off FMA, so the SSE variant is what a pre-AVX machine would run.
+    sffdn_add_bank_variant(Sse FLAGS -msse4.2 -mno-avx)
+    sffdn_add_bank_variant(Avx FLAGS -mavx2 -mfma)
+    set(MC_BANK_OBJECTS $<TARGET_OBJECTS:mc_bank_Sse> $<TARGET_OBJECTS:mc_bank_Avx>)
+    set(MC_DEFINES -DMC_HAS_SIMD_BANK_X86)
+else()
+    sffdn_add_bank_variant(Native)
+    set(MC_BANK_OBJECTS $<TARGET_OBJECTS:mc_bank_Native>)
+    set(MC_DEFINES "")
+endif()
 
 set(MC_LIBS steamaudio_iir kfr kfr_dsp)
-set(MC_DEFINES "")
 
 if(APPLE)
     list(APPEND MC_SOURCES mc_vdsp_biquad.cpp mc_vdsp_biquadm.cpp)
@@ -93,10 +127,16 @@ if(APPLE)
     list(APPEND MC_DEFINES -DMC_HAS_VDSP)
 endif()
 
+if(USE_IPP)
+    list(APPEND MC_SOURCES mc_ipp.cpp)
+    list(APPEND MC_LIBS IPP::ippcore IPP::ipps)
+    list(APPEND MC_DEFINES -DMC_HAS_IPP)
+endif()
+
 function(sffdn_add_mc_target target_name)
     cmake_parse_arguments(ARG "NEON" "" "EXTRA_SOURCES;EXTRA_LIBS;EXTRA_DEFINES" ${ARGN})
 
-    add_executable(${target_name} ${ARG_EXTRA_SOURCES} ${MC_SOURCES} mc_cmsis.cpp)
+    add_executable(${target_name} ${ARG_EXTRA_SOURCES} ${MC_SOURCES} ${MC_BANK_OBJECTS} mc_cmsis.cpp)
     target_link_libraries(${target_name} PUBLIC ${MC_LIBS} ${ARG_EXTRA_LIBS})
     target_compile_options(${target_name} PRIVATE "${COMPILE_OPTION}")
     target_compile_definitions(${target_name} PRIVATE ${MC_DEFINES} ${ARG_EXTRA_DEFINES})

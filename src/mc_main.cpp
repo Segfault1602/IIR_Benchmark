@@ -4,8 +4,12 @@
 #include "mc_cmsis.h"
 #include "mc_kfr.h"
 #include "mc_scalar.h"
-#include "mc_simd_bank.h"
+#include "mc_simd_bank_variants.h"
 #include "mc_steamaudio.h"
+
+#ifdef MC_HAS_IPP
+#include "mc_ipp.h"
+#endif
 
 #ifdef MC_HAS_VDSP
 #include "mc_vdsp_biquad.h"
@@ -41,10 +45,16 @@ std::vector<std::unique_ptr<MultiChannelFilter>> MakeBackends()
 {
     std::vector<std::unique_ptr<MultiChannelFilter>> backends;
     backends.push_back(std::make_unique<McScalarDf2t>());
-    backends.push_back(std::make_unique<McSimdBank>());
+    for (auto& bank : MakeSimdBankVariants())
+    {
+        backends.push_back(std::move(bank));
+    }
     backends.push_back(std::make_unique<McKfr>());
     backends.push_back(std::make_unique<McCmsis>());
     backends.push_back(std::make_unique<McSteamAudio>());
+#ifdef MC_HAS_IPP
+    backends.push_back(std::make_unique<McIpp>());
+#endif
 #ifdef MC_HAS_VDSP
     backends.push_back(std::make_unique<McVdspBiquad>());
     backends.push_back(std::make_unique<McVdspBiquadm>());

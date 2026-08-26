@@ -1,14 +1,15 @@
 #include "ipp_filter.h"
 
 #include <cassert>
+#include <cstring>
 #include <iostream>
 #include <vector>
 
 #include "filter_coeffs.h"
 
-IppFilter::IppFilter()
+IppFilter::IppFilter(size_t num_stage)
 {
-    int numBq = kTestSOS.size();
+    int numBq = num_stage == 0 ? static_cast<int>(kTestSOS.size()) : static_cast<int>(num_stage);
 
     int bufferSize = 0;
     IppStatus status = ippsIIRGetStateSize_BiQuad_32f(numBq, &bufferSize);
@@ -26,11 +27,12 @@ IppFilter::IppFilter()
     }
 
     pTaps_ = ippsMalloc_32f(6 * numBq);
-    for (size_t i = 0; i < kTestSOS.size(); ++i)
+    for (int i = 0; i < numBq; ++i)
     {
-        for (size_t j = 0; j < kTestSOS[i].size(); ++j)
+        const auto& sos = kTestSOS[i % kTestSOS.size()];
+        for (size_t j = 0; j < sos.size(); ++j)
         {
-            pTaps_[i * 6 + j] = kTestSOS[i][j];
+            pTaps_[i * 6 + j] = sos[j];
         }
     }
 

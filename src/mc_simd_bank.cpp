@@ -1,5 +1,6 @@
 #include "mc_simd_bank.h"
 
+#include <memory>
 #include <stdexcept>
 
 void McSimdBank::prepare(std::span<const std::array<float, 6>> sos, uint32_t channels,
@@ -56,5 +57,25 @@ void McSimdBank::process(std::span<const float> input, std::span<float> output, 
 
 const char* McSimdBank::name() const
 {
-    return "SimdBiquadBank";
+    // simd.h picks the kernel at compile time, so report whichever one this translation unit was
+    // actually built with. The x86 build compiles this file once per width, which is why the width
+    // has to appear in the benchmark name.
+#if defined(SFFDN_SIMD_AVX)
+    return "SimdBiquadBank_AVX";
+#elif defined(SFFDN_SIMD_SSE)
+    return "SimdBiquadBank_SSE";
+#elif defined(SFFDN_SIMD_NEON)
+    return "SimdBiquadBank_NEON";
+#else
+    return "SimdBiquadBank_Scalar";
+#endif
 }
+
+#ifdef MC_SIMD_BANK_FACTORY
+// Each variant is compiled with the namespace and class renamed, so the only symbol the rest of the
+// program can name is this factory. See sffdn_add_bank_variant() in CMakeLists.txt.
+std::unique_ptr<MultiChannelFilter> MC_SIMD_BANK_FACTORY()
+{
+    return std::make_unique<McSimdBank>();
+}
+#endif

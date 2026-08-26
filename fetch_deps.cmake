@@ -45,4 +45,17 @@ FetchContent_Declare(
     GIT_TAG 7.1.0
 )
 
-FetchContent_MakeAvailable(nanobench doctest libsndfile kfr)
+# SteamAudio is fetched for its IIR filter only. Its own CMake build wants IPP, MKL, FLAC, mysofa
+# and friends, so SOURCE_SUBDIR is pointed at a directory that does not exist: FetchContent then
+# downloads the sources without configuring anything, and externals/steamaudio compiles the handful
+# of files the benchmark actually needs.
+FetchContent_Declare(
+    steamaudio
+    GIT_REPOSITORY https://github.com/ValveSoftware/steam-audio.git
+    GIT_TAG v4.8.1
+    GIT_SHALLOW TRUE
+    SOURCE_SUBDIR do_not_configure
+    PATCH_COMMAND ${CMAKE_COMMAND} -DSTEAMAUDIO_SOURCE_DIR=<SOURCE_DIR> -P
+                  ${CMAKE_CURRENT_LIST_DIR}/cmake/patch_steamaudio.cmake)
+
+FetchContent_MakeAvailable(nanobench doctest libsndfile kfr steamaudio)

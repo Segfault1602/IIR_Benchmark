@@ -16,5 +16,5 @@ class SteamAudioFilter : public Filter
     void process(std::span<const float> input, std::span<float> output) override;
 
   private:
-    std::vector<ipl::IIRFilterer> filters_;
+    std::vector<ipl::IIR2Filterer> filters_;
 };

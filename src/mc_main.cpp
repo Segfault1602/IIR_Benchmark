@@ -1,7 +1,6 @@
 #include "filter_coeffs.h"
 #include "multichannel_filter.h"
 
-#include "mc_cmsis.h"
 #include "mc_kfr.h"
 #include "mc_scalar.h"
 #include "mc_simd_bank_variants.h"
@@ -50,7 +49,6 @@ std::vector<std::unique_ptr<MultiChannelFilter>> MakeBackends()
         backends.push_back(std::move(bank));
     }
     backends.push_back(std::make_unique<McKfr>());
-    backends.push_back(std::make_unique<McCmsis>());
     backends.push_back(std::make_unique<McSteamAudio>());
 #ifdef MC_HAS_IPP
     backends.push_back(std::make_unique<McIpp>());

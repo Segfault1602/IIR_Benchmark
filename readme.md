@@ -87,7 +87,7 @@ The results are mostly linear, as expected. One interesting thing to notice is t
 
 ### What is being compared
 
-The multi-channel benchmark compares a bank that vectorizes across channels (`SimdBiquadBank`, built once per SIMD width) against single-channel libraries instantiated N times (`ScalarDF2T`, `KFR_xN`, `CMSIS_DF2T_xN`, `SteamAudio_<kernel>_xN`, `IPP_xN`, `vDSP_biquad_xN`), plus `vDSP_biquadm`, which is the only other backend here that vectorizes across the channel dimension rather than filtering each channel independently.
+The multi-channel benchmark compares a bank that vectorizes across channels (`SimdBiquadBank`, built once per SIMD width) against single-channel libraries instantiated N times (`ScalarDF2T`, `KFR_xN`, `SteamAudio_<kernel>_xN`, `IPP_xN`, `vDSP_biquad_xN`), plus `vDSP_biquadm`, which is the only other backend here that vectorizes across the channel dimension rather than filtering each channel independently.
 
 Backends that have more than one kernel say which one produced the numbers. `SimdBiquadBank_SSE` / `SimdBiquadBank_AVX` are separate compilations, whereas SteamAudio picks its width at run time, so `SteamAudio_AVX_xN` reflects what `gSIMDLevel()` actually selected on the machine that produced the plot.
 

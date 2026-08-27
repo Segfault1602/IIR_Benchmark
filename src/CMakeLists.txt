@@ -134,9 +134,9 @@ if(USE_IPP)
 endif()
 
 function(sffdn_add_mc_target target_name)
-    cmake_parse_arguments(ARG "NEON" "" "EXTRA_SOURCES;EXTRA_LIBS;EXTRA_DEFINES" ${ARGN})
+    cmake_parse_arguments(ARG "" "" "EXTRA_SOURCES;EXTRA_LIBS;EXTRA_DEFINES" ${ARGN})
 
-    add_executable(${target_name} ${ARG_EXTRA_SOURCES} ${MC_SOURCES} ${MC_BANK_OBJECTS} mc_cmsis.cpp)
+    add_executable(${target_name} ${ARG_EXTRA_SOURCES} ${MC_SOURCES} ${MC_BANK_OBJECTS})
     target_link_libraries(${target_name} PUBLIC ${MC_LIBS} ${ARG_EXTRA_LIBS})
     target_compile_options(${target_name} PRIVATE "${COMPILE_OPTION}")
     target_compile_definitions(${target_name} PRIVATE ${MC_DEFINES} ${ARG_EXTRA_DEFINES})
@@ -147,16 +147,8 @@ function(sffdn_add_mc_target target_name)
 endfunction()
 
 sffdn_add_mc_target(
-    multichannel_perf EXTRA_SOURCES mc_main.cpp EXTRA_LIBS nanobench cmsis_scalar)
+    multichannel_perf EXTRA_SOURCES mc_main.cpp EXTRA_LIBS nanobench)
 
 sffdn_add_mc_target(
-    multichannel_check EXTRA_SOURCES mc_check.cpp EXTRA_LIBS doctest cmsis_scalar)
+    multichannel_check EXTRA_SOURCES mc_check.cpp EXTRA_LIBS doctest)
 target_include_directories(multichannel_check PRIVATE ${doctest_SOURCE_DIR}/doctest)
-
-if(NEON_FILTER)
-    sffdn_add_mc_target(
-        multichannel_perf_neon
-        EXTRA_SOURCES mc_main.cpp
-        EXTRA_LIBS nanobench cmsis_neon
-        EXTRA_DEFINES -DARM_MATH_NEON)
-endif()
